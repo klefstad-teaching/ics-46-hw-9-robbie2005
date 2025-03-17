@@ -14,45 +14,88 @@ void error(string word1, string word2, string msg) {
     cerr << "Error: " << msg << " (" << word1 << ", " << word2 << ")" << endl;
 }
 
-bool edit_distance_within(const string& str1, const string& str2, int d) {
-    if (abs(static_cast<int>(str1.size()) - static_cast<int>(str2.size())) > d)
-        return false;
-    
-    int count = 0;
-    for (size_t i = 0; i < min(str1.size(), str2.size()); ++i) {
-        if (str1[i] != str2[i]) {
-            if (++count > d) return false;
+bool edit_distance_within(const std::string& word1, const std::string& word2, int threshold) {
+    int len1 = word1.size();
+    int len2 = word2.size();
+    // If len diff > 1, the distance not within threshold
+    if (abs(len1 - len2) > 1) return false;
+    // Both words have the same len 
+    if (len1 == len2) {
+        int mismatch_count = 0;
+        for (size_t index = 0; index < len1; ++index) {
+            if (word1[index] != word2[index]) {
+                if (++mismatch_count > threshold) return false;
+            }
+        }
+        return true;
+    }
+    // Differ in len by 1
+    const std::string& smaller = (len1 < len2) ? word1 : word2;
+    const std::string& larger = (len1 < len2) ? word2 : word1;
+
+    int pos1 = 0, pos2 = 0;
+    bool discrepancy_found = false;
+    while (pos1 < smaller.size() && pos2 < larger.size()) {
+        if (smaller[pos1] != larger[pos2]) {
+            if (discrepancy_found) return false; 
+            discrepancy_found = true;
+            ++pos2;
+        } else {
+            ++pos1;
+            ++pos2;
         }
     }
-    count += abs(static_cast<int>(str1.size()) - static_cast<int>(str2.size()));
-
-    return count <= d;
+    return true;
 }
 
-bool is_adjacent(const string& word1, const string& word2) {
-    return edit_distance_within(word1, word2, 1);
+bool is_adjacent(const std::string& word1, const std::string& word2) {
+    if (word1.size() != word2.size()) { 
+        return edit_distance_within(word1, word2, 1); 
+    }
+
+    int difference_count = 0;
+
+    for (size_t index = 0; index < word1.size(); ++index) {
+        if (word1[index] != word2[index]) { 
+            ++difference_count;
+            if (difference_count > 1) { 
+                return false; 
+            }
+        }
+    }
+
+    return (difference_count == 1);
 }
 
-vector<string> generate_word_ladder(const string& begin_word, const string& end_word, const set<string>& word_list){
+vector<string> generate_word_ladder(const string& begin_word, const string& end_word, const set<string>& word_list) {
     if (begin_word == end_word) return {};
-    set<string> local_set = word_list;
-    queue<vector<string>> queue_path;
-    queue_path.push({begin_word});
-    local_set.erase(begin_word);
-    while (!queue_path.empty()){
-        vector<string> word_ladder = queue_path.front();
-        queue_path.pop();
-        string cur_word = word_ladder.back();
-        if (cur_word == end_word) return word_ladder;
-        for (auto word = local_set.begin(); word != local_set.end();) {
-            if (is_adjacent(cur_word, *word)){
-                vector<string> updated_ladder = word_ladder;
-                updated_ladder.push_back(*word);
-                queue_path.push(updated_ladder);
-                word = local_set.erase(word);
-            } else {++word;}
+
+    std::set<std::string> remaining_words = word_list;
+    std::queue<std::vector<std::string>> paths_queue;
+    
+    paths_queue.push({begin_word});
+    remaining_words.erase(begin_word);
+
+    while (!paths_queue.empty()) {
+        std::vector<std::string> current_sequence = paths_queue.front();
+        paths_queue.pop();
+        
+        std::string last_word = current_sequence.back();
+        
+        if (last_word == end_word) return current_sequence;
+
+        for (auto it = remaining_words.begin(); it != remaining_words.end();) {
+            if (is_adjacent(last_word, *it)) {
+                std::vector<std::string> new_sequence = current_sequence;
+                new_sequence.push_back(*it);
+                paths_queue.push(new_sequence);
+                it = remaining_words.erase(it); 
+            } else {
+                ++it;
+            }
         }
     }
+
     return {};
 }
 
