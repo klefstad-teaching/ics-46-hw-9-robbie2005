@@ -49,22 +49,7 @@ bool edit_distance_within(const std::string& word1, const std::string& word2, in
 }
 
 bool is_adjacent(const std::string& word1, const std::string& word2) {
-    if (word1.size() != word2.size()) { 
-        return edit_distance_within(word1, word2, 1); 
-    }
-
-    int difference_count = 0;
-
-    for (size_t index = 0; index < word1.size(); ++index) {
-        if (word1[index] != word2[index]) { 
-            ++difference_count;
-            if (difference_count > 1) { 
-                return false; 
-            }
-        }
-    }
-
-    return (difference_count == 1);
+    return edit_distance_within(word1, word2, 1);
 }
 
 vector<string> generate_word_ladder(const string& begin_word, const string& end_word, const set<string>& word_list) {
